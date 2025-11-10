@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+
+# PyInstaller / build
+dist/
+build/
+*.spec
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Config and data files
+*.json
+/config/
+data/
+
+# Logs
+*.log
+
+# Scripts folder (if generated, optional)
+scripts/*.sh
+
+# IDE / editor
+.vscode/
+.idea/
+*.iml

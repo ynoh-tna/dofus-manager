@@ -1,0 +1,103 @@
+# 🧩 Dofus Window Manager
+
+A lightweight **multi-instance window manager** for Dofus, built with **Python + PyQt6**.
+It allows you to **rename**, **organize**, and **switch** between multiple Dofus windows instantly — optimized for **keyboard-driven workflows** and **zero-latency automation**.
+
+---
+
+## 🚀 Features
+
+* ⚡ **Instant window renaming**
+* 🔁 **Cycle between Dofus windows** (forward/backward)
+* 🖥️ **Toggle workspaces** with a single key
+* 📁 **Profiles management** — save/load different window setups
+* 🧠 **Script generator** — automatically creates shell scripts for each action
+* 🪶 **Fast and minimal PyQt6 GUI** for setup and configuration
+* 🎯 Designed for **power users** — full keyboard or macro binding support
+
+---
+
+## 🧱 Project Structure
+
+```
+dofus_window_manager/
+├── main.py                  # Entry point (PyQt6 GUI)
+├── core/
+│   ├── profile_manager.py   # Handles saving/loading of window profiles
+│   ├── window_manager.py    # Controls window naming and workspace actions
+│   ├── script_generator.py  # Builds external shell scripts
+├── ui/
+│   ├── main_window.ui       # Qt Designer layout
+│   ├── icons/               # Optional icons
+├── scripts/
+│   ├── rename_windows.sh
+│   ├── cycle_forward.sh
+│   ├── cycle_backward.sh
+│   ├── toggle_workspace.sh
+```
+
+---
+
+## ⚙️ Requirements
+
+* **Python 3.10+**
+* **PyQt6**
+* **wmctrl** and/or **xdotool** (Linux window control utilities)
+
+Install dependencies:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install PyQt6
+sudo apt install wmctrl xdotool
+deactivate
+```
+
+---
+
+## 💡 Usage
+
+### 1. Launch the GUI
+
+```bash
+python3 main.py
+```
+
+### 2. Configure your Dofus windows
+
+* Add or edit window titles
+* Assign them to a workspace
+* Save your setup as a profile
+
+### 3. Generate control scripts
+
+Click **“Generate Scripts”** — this will create:
+
+* `cycle_forward.sh`
+* `cycle_backward.sh`
+* `rename_windows.sh`
+* `toggle_workspace.sh`
+
+### 4. Bind keys (optional)
+
+Bind the generated scripts to your favorite hotkeys:
+
+* Cycle forward → `F2`
+* Cycle backward → `F3`
+* Rename windows → `F11`
+* Toggle workspace → `F12`
+
+---
+
+## 📝 Notes
+
+* This tool is optimized for Linux (tested on Linux Mint Cinnamon 22).
+* GUI is primarily for configuration; daily use should rely on **keyboard shortcuts** or external macros for maximum speed.
+* Scripts are generated in the `scripts/` directory and can be executed independently.
+
+---
+
+## 📄 License
+
+MIT License

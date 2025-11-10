@@ -228,7 +228,7 @@ class DofusManager(QtWidgets.QMainWindow):
         section = QtWidgets.QVBoxLayout()
         section.setSpacing(4)
 
-        label = QtWidgets.QLabel("⚡ Quick Scripts")
+        label = QtWidgets.QLabel("⚡ Create or Generate Scripts")
         label.setStyleSheet("""
             font-size: 11px; 
             font-weight: bold; 
@@ -243,14 +243,14 @@ class DofusManager(QtWidgets.QMainWindow):
 
         # Button definitions: (text, tooltip, color, callback, row, col)
         buttons = [
-            ("🔄 Cycle", "Generate cycle forward/backward scripts", "#14b8a6", 
+            ("🔄 Cycle <->", "Generate cycle forward/backward scripts", "#14b8a6", 
              self._generate_cycle_only, 0, 0),
-            ("🖱️ Click", "Generate click & cycle script", "#84AB58", 
+            ("🖱️ Click and Cycle", "Generate click & cycle script", "#84AB58", 
              self._generate_click_cycle_only, 0, 1),
-            ("🗃️ WS", "Generate workspace toggle script", "#f59e0b", 
+            ("🗃️ Workspaces", "Generate workspace toggle script", "#f59e0b", 
              self._generate_workspace_only, 1, 0),
-            ("📁 Open", "Open scripts folder", "#8b5cf6", 
-             self._open_script_folder, 1, 1),
+            ("✏️ Rename windows", "Rename windows script", "#8b5cf6", 
+             self._generate_rename_only, 1, 1),
         ]
 
         for text, tooltip, color, callback, row, col in buttons:
@@ -555,6 +555,11 @@ class DofusManager(QtWidgets.QMainWindow):
             self._show_status("✅ Folder opened")
         except Exception:
             self._show_status("❌ Cannot open folder")
+
+    def _generate_rename_only(self):
+        """Generate rename script only"""
+        generate_rename_script(self.class_ini)
+        self._show_status("✅ Rename script generated")
 
     # === RENAME DIALOG ===
     def _quick_rename(self):

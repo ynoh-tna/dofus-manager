@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 from PyQt6 import QtWidgets, QtGui, QtCore
 from PyQt6.QtCore import Qt
 
@@ -25,12 +34,11 @@ class DofusManager(QtWidgets.QMainWindow):
         self.setWindowTitle(APP_NAME)
         
         # Compact window size - stays small and tidy
-        self.setFixedSize(320, 480)
+        self.setFixedSize(320, 650)
         
         # Window flags for compact mode (always on top option)
         self.setWindowFlags(
             Qt.WindowType.Window | 
-            Qt.WindowType.WindowStaysOnTopHint |
             Qt.WindowType.CustomizeWindowHint |
             Qt.WindowType.WindowCloseButtonHint |
             Qt.WindowType.WindowMinimizeButtonHint
@@ -48,44 +56,36 @@ class DofusManager(QtWidgets.QMainWindow):
         self._refresh_all()
 
     def _setup_ui(self):
-        """Build the compact user interface"""
         central = QtWidgets.QWidget()
         self.setCentralWidget(central)
         main_layout = QtWidgets.QVBoxLayout(central)
-        main_layout.setSpacing(8)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(6)
+        main_layout.setContentsMargins(8, 8, 8, 8)
 
-        # === HEADER: Quick Actions ===
-        header = self._create_header()
-        main_layout.addLayout(header)
+        # HEADER : Rename / Settings
+        main_layout.addLayout(self._create_header())
 
-        # === INITIATIVE ORDER LIST ===
-        list_section = self._create_list_section()
-        main_layout.addLayout(list_section)
-
-        # === EDIT TOOLBAR ===
-        edit_toolbar = self._create_edit_toolbar()
-        main_layout.addLayout(edit_toolbar)
-
-        # === PROFILES SECTION (Collapsible) ===
+        # PROFILES
         self.profile_section = self._create_profile_section()
         main_layout.addWidget(self.profile_section)
 
-        # === QUICK ACTIONS SECTION ===
-        actions_section = self._create_actions_section()
-        main_layout.addLayout(actions_section)
+        # LISTE
+        main_layout.addLayout(self._create_list_section(), stretch=1)
+
+        # EDIT TOOLBAR
+        main_layout.addLayout(self._create_edit_toolbar())
+
+        # QUICK SCRIPTS
+        main_layout.addLayout(self._create_actions_section())
 
         main_layout.addStretch()
 
-        # === MINI STATUS BAR ===
+        # STATUS LABEL seulement
         self.status_label = QtWidgets.QLabel("Ready")
-        self.status_label.setStyleSheet("""
-            color: #888888; 
-            font-size: 9px; 
-            padding: 2px;
-        """)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_label.setStyleSheet("color:#888;font-size:9px;padding:2px;")
         main_layout.addWidget(self.status_label)
+
 
     def _create_header(self):
         """Create compact header with main action button"""
@@ -123,24 +123,23 @@ class DofusManager(QtWidgets.QMainWindow):
         return header
 
     def _create_list_section(self):
-        """Create the initiative order list section"""
         section = QtWidgets.QVBoxLayout()
         section.setSpacing(4)
 
-        # Section label
         label = QtWidgets.QLabel("📋 Initiative Order")
-        label.setStyleSheet("""
-            font-size: 11px; 
-            font-weight: bold; 
-            color: #ffffff;
-        """)
+        label.setStyleSheet("font-size:11px;font-weight:bold;color:#ffffff;")
         section.addWidget(label)
 
-        # Compact draggable list
+        # Liste draggable
         self.list_widget = CompactDraggableList()
         self.list_widget.orderChanged.connect(self._sync_from_list)
-        self.list_widget.setFixedHeight(180)  # Compact height
-        section.addWidget(self.list_widget)
+
+        # Scroll area
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.list_widget)
+        scroll.setStyleSheet("border:none;")  # pour garder le style propre
+        section.addWidget(scroll, stretch=1)
 
         return section
 
@@ -186,63 +185,42 @@ class DofusManager(QtWidgets.QMainWindow):
         return toolbar
 
     def _create_profile_section(self):
-        """Create collapsible profile section"""
-        # Group box with toggle
+        """Create responsive profile section"""
         group = QtWidgets.QGroupBox("💾 Profiles")
-        group.setCheckable(True)
-        group.setChecked(False)  # Collapsed by default
+        group.setCheckable(False)
+        group.setChecked(False)
         group.setStyleSheet("""
             QGroupBox {
-                font-size: 10px;
-                font-weight: bold;
-                color: #aaaaaa;
-                border: 1px solid #333333;
-                border-radius: 4px;
-                margin-top: 6px;
-                padding-top: 6px;
+                font-size:10px;color:#aaa;border:1px solid #333;border-radius:4px;margin-top:6px;padding-top:6px;
             }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 8px;
-                padding: 0 4px;
-            }
+            QGroupBox::title { left:8px;padding:0 4px; }
         """)
 
         layout = QtWidgets.QVBoxLayout(group)
         layout.setContentsMargins(6, 6, 6, 6)
         layout.setSpacing(4)
 
-        # Profile combo
         self.combo_profiles = QtWidgets.QComboBox()
-        self.combo_profiles.setFixedHeight(24)
+        self.combo_profiles.setFixedHeight(26)
         self.combo_profiles.setToolTip("Select a saved profile")
         layout.addWidget(self.combo_profiles)
 
-        # Profile buttons in compact layout
         btn_layout = QtWidgets.QHBoxLayout()
         btn_layout.setSpacing(4)
 
-        btn_save = QtWidgets.QPushButton("💾")
-        btn_save.setFixedSize(28, 24)
-        btn_save.setToolTip("Save current order as profile")
-        btn_save.clicked.connect(self._save_profile)
-
-        btn_load = QtWidgets.QPushButton("📂")
-        btn_load.setFixedSize(28, 24)
-        btn_load.setToolTip("Load selected profile")
-        btn_load.clicked.connect(self._load_profile)
-
-        btn_del = QtWidgets.QPushButton("🗑️")
-        btn_del.setFixedSize(28, 24)
-        btn_del.setToolTip("Delete selected profile")
-        btn_del.clicked.connect(self._delete_profile)
-
-        for btn in [btn_save, btn_load, btn_del]:
-            btn.setStyleSheet(get_icon_button_style("#555555", size=24))
+        self.profile_buttons = []
+        for icon, tooltip, callback in [("💾","Save profile",self._save_profile),
+                                        ("📤","Load profile",self._load_profile),
+                                        ("🗑️","Delete profile",self._delete_profile)]:
+            btn = QtWidgets.QPushButton(icon)
+            btn.setFixedSize(30, 26)
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(callback)
+            btn.setStyleSheet(get_icon_button_style("#555", size=26))
             btn_layout.addWidget(btn)
+            self.profile_buttons.append(btn)
 
         layout.addLayout(btn_layout)
-
         return group
 
     def _create_actions_section(self):
@@ -374,15 +352,21 @@ class DofusManager(QtWidgets.QMainWindow):
                 self.hide()
 
     def closeEvent(self, event):
-        """Hide to tray instead of closing"""
-        event.ignore()
-        self.hide()
-        self.tray.showMessage(
-            APP_NAME,
-            "Running in system tray\nClick icon to restore",
-            QtWidgets.QSystemTrayIcon.MessageIcon.Information,
-            2000
-        )
+        """Ask user what to do on close"""
+        menu = QtWidgets.QMessageBox(self)
+        menu.setWindowTitle("Exit Options")
+        menu.setText("What do you want to do?")
+        btn_tray = menu.addButton("Minimize to tray", QtWidgets.QMessageBox.ButtonRole.AcceptRole)
+        btn_quit = menu.addButton("Quit", QtWidgets.QMessageBox.ButtonRole.DestructRole)
+        menu.exec()
+
+        if menu.clickedButton() == btn_quit:
+            event.accept()
+        else:
+            self.hide()
+            self.tray.showMessage(APP_NAME, "Running in system tray", QtWidgets.QSystemTrayIcon.MessageIcon.Information, 2000)
+            event.ignore()
+
 
     # === DATA MANAGEMENT ===
     def _refresh_all(self):

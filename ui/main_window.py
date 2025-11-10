@@ -3,273 +3,395 @@ from PyQt6.QtCore import Qt
 
 from core.config import (
     APP_NAME, CONFIG_FILE, PROFILES_FILE, DEFAULT_CLASS_INI,
-    RENAME_SCRIPT, CLICK_CYCLE_FORWARD,CYCLE_FORWARD, CYCLE_BACKWARD, TOGGLE_WORKSPACE, SCRIPT_DIR
+    RENAME_SCRIPT, CLICK_CYCLE_FORWARD, CYCLE_FORWARD, CYCLE_BACKWARD, 
+    TOGGLE_WORKSPACE, SCRIPT_DIR
 )
 from core.config import load_json, save_json
 from core.scripts import (
-    generate_rename_script, generate_cycle_forward, generate_cycle_backward, generate_toggle_workspace, generate_click_cycle
+    generate_rename_script, generate_cycle_forward, generate_cycle_backward, 
+    generate_toggle_workspace, generate_click_cycle
 )
 from core.workspace import get_workspaces
 from core.utils import make_executable, run_cmd
-from ui.widgets import DraggableList
-from ui.theme import apply_dark_theme, lighten_color, darken_color
+from ui.widgets import CompactDraggableList
+from ui.theme import apply_compact_theme, get_icon_button_style, get_action_button_style
 
 
 class DofusManager(QtWidgets.QMainWindow):
+    """Main compact window manager for Dofus multi-instance control"""
+    
     def __init__(self):
         super().__init__()
         self.setWindowTitle(APP_NAME)
-        self.setMinimumSize(800, 500)
+        
+        # Compact window size - stays small and tidy
+        self.setFixedSize(320, 480)
+        
+        # Window flags for compact mode (always on top option)
+        self.setWindowFlags(
+            Qt.WindowType.Window | 
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.CustomizeWindowHint |
+            Qt.WindowType.WindowCloseButtonHint |
+            Qt.WindowType.WindowMinimizeButtonHint
+        )
 
-        # Load config
+        # Load configuration
         cfg = load_json(CONFIG_FILE, {})
         self.class_ini = cfg.get('class_ini', DEFAULT_CLASS_INI.copy())
         self.profiles = load_json(PROFILES_FILE, {})
 
+        # Setup UI and apply theme
         self._setup_ui()
-        apply_dark_theme(self)
+        apply_compact_theme(self)
         self._create_tray()
         self._refresh_all()
 
     def _setup_ui(self):
+        """Build the compact user interface"""
         central = QtWidgets.QWidget()
         self.setCentralWidget(central)
         main_layout = QtWidgets.QVBoxLayout(central)
-        main_layout.setSpacing(10)
-        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
-        # HEADER
-        header = QtWidgets.QHBoxLayout()
-        title = QtWidgets.QLabel("🎮 Dofus Window Manager")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #0d7377;")
-        header.addWidget(title)
-        header.addStretch()
-
-        self.btn_rename = self._create_button("🔄 Rename Windows", "#0d7377", self._show_rename_dialog)
-        header.addWidget(self.btn_rename)
+        # === HEADER: Quick Actions ===
+        header = self._create_header()
         main_layout.addLayout(header)
 
-        # CONTENT
-        content = QtWidgets.QHBoxLayout()
-        main_layout.addLayout(content, 1)
+        # === INITIATIVE ORDER LIST ===
+        list_section = self._create_list_section()
+        main_layout.addLayout(list_section)
 
-        # LEFT PANEL - Initiative Order
-        left_panel = QtWidgets.QVBoxLayout()
-        left_panel.setSpacing(6)
-        left_panel.setContentsMargins(0, 0, 0, 0) 
-        content.addLayout(left_panel, 3)
+        # === EDIT TOOLBAR ===
+        edit_toolbar = self._create_edit_toolbar()
+        main_layout.addLayout(edit_toolbar)
 
-        label_init = QtWidgets.QLabel("📋 Initiative Order")
-        label_init.setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;")
-        left_panel.addWidget(label_init)
+        # === PROFILES SECTION (Collapsible) ===
+        self.profile_section = self._create_profile_section()
+        main_layout.addWidget(self.profile_section)
 
-        self.list_widget = DraggableList()
+        # === QUICK ACTIONS SECTION ===
+        actions_section = self._create_actions_section()
+        main_layout.addLayout(actions_section)
+
+        main_layout.addStretch()
+
+        # === MINI STATUS BAR ===
+        self.status_label = QtWidgets.QLabel("Ready")
+        self.status_label.setStyleSheet("""
+            color: #888888; 
+            font-size: 9px; 
+            padding: 2px;
+        """)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.status_label)
+
+    def _create_header(self):
+        """Create compact header with main action button"""
+        header = QtWidgets.QHBoxLayout()
+        header.setSpacing(6)
+
+        # Title with icon
+        title = QtWidgets.QLabel("🎮 Dofus WM")
+        title.setStyleSheet("""
+            font-size: 14px; 
+            font-weight: bold; 
+            color: #0d7377;
+        """)
+        title.setToolTip("Dofus Window Manager")
+        header.addWidget(title)
+        
+        header.addStretch()
+
+        # Main rename button
+        btn_rename = QtWidgets.QPushButton("🔄 Rename")
+        btn_rename.setStyleSheet(get_action_button_style("#0d7377"))
+        btn_rename.setFixedSize(80, 28)
+        btn_rename.setToolTip("Rename all Dofus windows\naccording to initiative order")
+        btn_rename.clicked.connect(self._show_rename_dialog)
+        header.addWidget(btn_rename)
+
+        # Settings button (gear icon)
+        btn_settings = QtWidgets.QPushButton("⚙️")
+        btn_settings.setStyleSheet(get_icon_button_style("#6366f1", size=28))
+        btn_settings.setFixedSize(28, 28)
+        btn_settings.setToolTip("Generate all scripts\nand open folder")
+        btn_settings.clicked.connect(self._show_settings_menu)
+        header.addWidget(btn_settings)
+
+        return header
+
+    def _create_list_section(self):
+        """Create the initiative order list section"""
+        section = QtWidgets.QVBoxLayout()
+        section.setSpacing(4)
+
+        # Section label
+        label = QtWidgets.QLabel("📋 Initiative Order")
+        label.setStyleSheet("""
+            font-size: 11px; 
+            font-weight: bold; 
+            color: #ffffff;
+        """)
+        section.addWidget(label)
+
+        # Compact draggable list
+        self.list_widget = CompactDraggableList()
         self.list_widget.orderChanged.connect(self._sync_from_list)
-        self.list_widget.setFixedHeight(280)  # compact
-        left_panel.addWidget(self.list_widget)
+        self.list_widget.setFixedHeight(180)  # Compact height
+        section.addWidget(self.list_widget)
 
-        # Edit toolbar
-        edit_toolbar = QtWidgets.QHBoxLayout()
-        edit_toolbar.setSpacing(6)
+        return section
 
-        btn_add = self._create_icon_button("➕", "Add", "#22c55e", self._add_class)
-        btn_edit = self._create_icon_button("✏️", "Rename", "#3b82f6", self._rename_class)
-        btn_del = self._create_icon_button("🗑️", "Delete", "#ef4444", self._remove_class)
-        for btn in [btn_add, btn_edit, btn_del]:
-            btn.setFixedSize(32, 32)
+    def _create_edit_toolbar(self):
+        """Create compact edit toolbar with icon buttons"""
+        toolbar = QtWidgets.QHBoxLayout()
+        toolbar.setSpacing(6)
 
-        edit_toolbar.addWidget(btn_add)
-        edit_toolbar.addWidget(btn_edit)
-        edit_toolbar.addWidget(btn_del)
-        edit_toolbar.addStretch()
+        # Add button
+        btn_add = QtWidgets.QPushButton("➕")
+        btn_add.setStyleSheet(get_icon_button_style("#22c55e"))
+        btn_add.setFixedSize(32, 32)
+        btn_add.setToolTip("Add new class to order")
+        btn_add.clicked.connect(self._add_class)
+        toolbar.addWidget(btn_add)
 
-        btn_reset = self._create_small_button("🔄 Reset to Default", "#f59e0b", self._reset_to_default)
-        btn_reset.setFixedHeight(24)
-        edit_toolbar.addWidget(btn_reset)
+        # Edit button
+        btn_edit = QtWidgets.QPushButton("✏️")
+        btn_edit.setStyleSheet(get_icon_button_style("#3b82f6"))
+        btn_edit.setFixedSize(32, 32)
+        btn_edit.setToolTip("Rename selected class")
+        btn_edit.clicked.connect(self._rename_class)
+        toolbar.addWidget(btn_edit)
 
-        left_panel.addLayout(edit_toolbar)
-        spacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
-        left_panel.addItem(spacer)
+        # Delete button
+        btn_del = QtWidgets.QPushButton("🗑️")
+        btn_del.setStyleSheet(get_icon_button_style("#ef4444"))
+        btn_del.setFixedSize(32, 32)
+        btn_del.setToolTip("Delete selected class")
+        btn_del.clicked.connect(self._remove_class)
+        toolbar.addWidget(btn_del)
 
-        # hint = QtWidgets.QLabel("💡 Drag & drop to reorder")
-        # hint.setStyleSheet("color: #888888; font-size: 10px; font-style: italic;")
-        # hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # left_panel.addWidget(hint)
+        toolbar.addStretch()
 
-        # RIGHT PANEL - Profiles & Scripts
-        right_panel = QtWidgets.QVBoxLayout()
-        content.addLayout(right_panel, 2)
+        # Reset button
+        btn_reset = QtWidgets.QPushButton("🔄")
+        btn_reset.setStyleSheet(get_icon_button_style("#f59e0b"))
+        btn_reset.setFixedSize(32, 32)
+        btn_reset.setToolTip("Reset to default classes\n(Feca, Cra, Enu, Panda, Sadi)")
+        btn_reset.clicked.connect(self._reset_to_default)
+        toolbar.addWidget(btn_reset)
 
-        # Profiles
-        profile_box = QtWidgets.QGroupBox("💾 Profiles")
-        profile_box.setStyleSheet("""
+        return toolbar
+
+    def _create_profile_section(self):
+        """Create collapsible profile section"""
+        # Group box with toggle
+        group = QtWidgets.QGroupBox("💾 Profiles")
+        group.setCheckable(True)
+        group.setChecked(False)  # Collapsed by default
+        group.setStyleSheet("""
             QGroupBox {
-                font-size: 12px;
-                font-weight: bold;
-                color: #ffffff;
-                border: 2px solid #444444;
-                border-radius: 6px;
-                margin: 5px;
-                padding: 5px;
-            }
-        """)
-        profile_layout = QtWidgets.QVBoxLayout(profile_box)
-        profile_layout.setContentsMargins(5, 5, 5, 5)
-        profile_layout.setSpacing(4)
-
-        self.combo_profiles = QtWidgets.QComboBox()
-        self.combo_profiles.setFixedHeight(22)
-        profile_layout.addWidget(self.combo_profiles)
-
-        profile_btns = QtWidgets.QHBoxLayout()
-        profile_btns.setSpacing(4)
-        btn_save_prof = self._create_small_button("💾 Save", "#0d7377", self._save_profile)
-        btn_load_prof = self._create_small_button("📂 Load", "#14b8a6", self._load_profile)
-        btn_del_prof = self._create_small_button("🗑️ Delete", "#ef4444", self._delete_profile)
-        for btn in [btn_save_prof, btn_load_prof, btn_del_prof]:
-            btn.setFixedHeight(22)
-
-        profile_btns.addWidget(btn_save_prof)
-        profile_btns.addWidget(btn_load_prof)
-        profile_btns.addWidget(btn_del_prof)
-        profile_layout.addLayout(profile_btns)
-
-        right_panel.addWidget(profile_box)
-
-        # Scripts info
-        scripts_box = QtWidgets.QGroupBox("📜 Generated Scripts")
-        scripts_box.setStyleSheet("""
-            QGroupBox {
-                font-size: 12px;
-                font-weight: bold;
-                color: #ffffff;
-                border: 2px solid #444444;
-                border-radius: 6px;
-                margin: 5px;
-                padding: 5px;
-            }
-        """)
-        scripts_layout = QtWidgets.QVBoxLayout(scripts_box)
-        scripts_layout.setContentsMargins(5, 5, 5, 5)
-        scripts_layout.setSpacing(4)
-
-        self.lbl_scripts = QtWidgets.QLabel()
-        self.lbl_scripts.setWordWrap(True)
-        self.lbl_scripts.setStyleSheet("color: #cccccc; font-size: 10px;")
-        self._update_script_paths()
-        scripts_layout.addWidget(self.lbl_scripts)
-
-        gen_layout = QtWidgets.QVBoxLayout()
-        gen_layout.setSpacing(4)
-
-        btn_gen_rename = self._create_small_button("✏️ Rename", "#0d7377", self._generate_rename_only)
-        btn_gen_cycle = self._create_small_button("🔄 Cycle", "#14b8a6", self._generate_cycle_only)
-        btn_click_gen_cycle = self._create_small_button("🖱️ Click & Cycle", "#84AB58", self._generate_click_cycle_only)
-        btn_gen_workspace = self._create_small_button("🗃️ Workspace", "#f59e0b", self._generate_workspace_only)
-        btn_gen_all = self._create_small_button("🔧 All", "#6366f1", self._generate_all_scripts)
-
-        for btn in [btn_gen_rename, btn_gen_cycle, btn_click_gen_cycle, btn_gen_workspace, btn_gen_all]:
-            btn.setFixedHeight(24)
-            gen_layout.addWidget(btn)
-
-        scripts_layout.addLayout(gen_layout)
-
-        btn_open_folder = self._create_small_button("📁 Open Folder", "#8b5cf6", self._open_script_folder)
-        btn_open_folder.setFixedHeight(24)
-        scripts_layout.addWidget(btn_open_folder)
-
-        right_panel.addWidget(scripts_box)
-        right_panel.addStretch()
-
-        # STATUS BAR
-        self.status = QtWidgets.QStatusBar()
-        self.status.setStyleSheet("color: #aaaaaa; font-size: 10px;")
-        self.setStatusBar(self.status)
-
-    # THEME / UI HELPERS
-    def _create_button(self, text, color, callback):
-        btn = QtWidgets.QPushButton(text)
-        btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {color};
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 6px 12px;
-                font-weight: bold;
-                font-size: 12px;
-            }}
-            QPushButton:hover {{
-                background-color: {lighten_color(color)};
-            }}
-            QPushButton:pressed {{
-                background-color: {darken_color(color)};
-            }}
-        """)
-        btn.clicked.connect(callback)
-        return btn
-
-    def _create_small_button(self, text, color, callback):
-        btn = QtWidgets.QPushButton(text)
-        btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {color};
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 4px 10px;
                 font-size: 10px;
-            }}
-            QPushButton:hover {{
-                background-color: {lighten_color(color)};
-            }}
+                font-weight: bold;
+                color: #aaaaaa;
+                border: 1px solid #333333;
+                border-radius: 4px;
+                margin-top: 6px;
+                padding-top: 6px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 8px;
+                padding: 0 4px;
+            }
         """)
-        btn.clicked.connect(callback)
-        return btn
 
-    def _create_icon_button(self, icon, tooltip, color, callback):
-        btn = QtWidgets.QPushButton(icon)
-        btn.setToolTip(tooltip)
-        btn.setFixedSize(32, 32)
-        btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {color};
-                color: white;
-                border: none;
-                border-radius: 16px;
-                font-size: 14px;
-            }}
-            QPushButton:hover {{
-                background-color: {lighten_color(color)};
-            }}
+        layout = QtWidgets.QVBoxLayout(group)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(4)
+
+        # Profile combo
+        self.combo_profiles = QtWidgets.QComboBox()
+        self.combo_profiles.setFixedHeight(24)
+        self.combo_profiles.setToolTip("Select a saved profile")
+        layout.addWidget(self.combo_profiles)
+
+        # Profile buttons in compact layout
+        btn_layout = QtWidgets.QHBoxLayout()
+        btn_layout.setSpacing(4)
+
+        btn_save = QtWidgets.QPushButton("💾")
+        btn_save.setFixedSize(28, 24)
+        btn_save.setToolTip("Save current order as profile")
+        btn_save.clicked.connect(self._save_profile)
+
+        btn_load = QtWidgets.QPushButton("📂")
+        btn_load.setFixedSize(28, 24)
+        btn_load.setToolTip("Load selected profile")
+        btn_load.clicked.connect(self._load_profile)
+
+        btn_del = QtWidgets.QPushButton("🗑️")
+        btn_del.setFixedSize(28, 24)
+        btn_del.setToolTip("Delete selected profile")
+        btn_del.clicked.connect(self._delete_profile)
+
+        for btn in [btn_save, btn_load, btn_del]:
+            btn.setStyleSheet(get_icon_button_style("#555555", size=24))
+            btn_layout.addWidget(btn)
+
+        layout.addLayout(btn_layout)
+
+        return group
+
+    def _create_actions_section(self):
+        """Create quick action buttons section"""
+        section = QtWidgets.QVBoxLayout()
+        section.setSpacing(4)
+
+        label = QtWidgets.QLabel("⚡ Quick Scripts")
+        label.setStyleSheet("""
+            font-size: 11px; 
+            font-weight: bold; 
+            color: #ffffff;
         """)
-        btn.clicked.connect(callback)
-        return btn
-    # TRAY
-    def _create_tray(self):
-        self.tray = QtWidgets.QSystemTrayIcon(self)
-        self.tray.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_ComputerIcon))
-        menu = QtWidgets.QMenu()
-        show_action = menu.addAction("Show")
-        show_action.triggered.connect(self.showNormal)
+        section.addWidget(label)
+
+        # Grid of action buttons
+        grid = QtWidgets.QGridLayout()
+        grid.setSpacing(4)
+        grid.setContentsMargins(0, 0, 0, 0)
+
+        # Button definitions: (text, tooltip, color, callback, row, col)
+        buttons = [
+            ("🔄 Cycle", "Generate cycle forward/backward scripts", "#14b8a6", 
+             self._generate_cycle_only, 0, 0),
+            ("🖱️ Click", "Generate click & cycle script", "#84AB58", 
+             self._generate_click_cycle_only, 0, 1),
+            ("🗃️ WS", "Generate workspace toggle script", "#f59e0b", 
+             self._generate_workspace_only, 1, 0),
+            ("📁 Open", "Open scripts folder", "#8b5cf6", 
+             self._open_script_folder, 1, 1),
+        ]
+
+        for text, tooltip, color, callback, row, col in buttons:
+            btn = QtWidgets.QPushButton(text)
+            btn.setStyleSheet(get_action_button_style(color))
+            btn.setFixedHeight(32)
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(callback)
+            grid.addWidget(btn, row, col)
+
+        section.addLayout(grid)
+        return section
+
+    def _show_settings_menu(self):
+        """Show settings menu popup"""
+        menu = QtWidgets.QMenu(self)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: #2b2b2b;
+                color: #ffffff;
+                border: 1px solid #444444;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 20px;
+            }
+            QMenu::item:selected {
+                background-color: #0d7377;
+            }
+        """)
+
+        # Add actions
+        act_gen_all = menu.addAction("🔧 Generate All Scripts")
+        act_gen_all.triggered.connect(self._generate_all_scripts)
+
         menu.addSeparator()
-        quit_action = menu.addAction("Quit")
+
+        act_open = menu.addAction("📁 Open Scripts Folder")
+        act_open.triggered.connect(self._open_script_folder)
+
+        act_about = menu.addAction("ℹ️ About")
+        act_about.triggered.connect(self._show_about)
+
+        # Show menu at button position
+        sender = self.sender()
+        menu.exec(sender.mapToGlobal(sender.rect().bottomLeft()))
+
+    def _show_about(self):
+        """Show about dialog"""
+        QtWidgets.QMessageBox.information(
+            self,
+            "About",
+            f"{APP_NAME}\n\n"
+            "A compact window manager for Dofus\n"
+            "multi-instance control.\n\n"
+            "Scripts location:\n"
+            f"{SCRIPT_DIR}"
+        )
+
+    # === SYSTEM TRAY ===
+    def _create_tray(self):
+        """Create system tray icon and menu"""
+        self.tray = QtWidgets.QSystemTrayIcon(self)
+        self.tray.setIcon(
+            self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_ComputerIcon)
+        )
+        
+        # Tray menu
+        menu = QtWidgets.QMenu()
+        
+        show_action = menu.addAction("🎮 Show Manager")
+        show_action.triggered.connect(self.showNormal)
+        
+        menu.addSeparator()
+        
+        rename_action = menu.addAction("🔄 Rename Windows")
+        rename_action.triggered.connect(self._quick_rename)
+        
+        cycle_action = menu.addAction("🔁 Generate Cycle Scripts")
+        cycle_action.triggered.connect(self._generate_cycle_only)
+        
+        menu.addSeparator()
+        
+        quit_action = menu.addAction("❌ Quit")
         quit_action.triggered.connect(QtWidgets.QApplication.quit)
+        
         self.tray.setContextMenu(menu)
         self.tray.setToolTip(APP_NAME)
         self.tray.activated.connect(self._on_tray_click)
         self.tray.show()
 
     def _on_tray_click(self, reason):
+        """Handle tray icon click"""
         if reason == QtWidgets.QSystemTrayIcon.ActivationReason.Trigger:
-            self.showNormal() if self.isHidden() else self.hide()
+            if self.isHidden() or self.isMinimized():
+                self.showNormal()
+                self.activateWindow()
+            else:
+                self.hide()
 
-    # DATA MANAGEMENT
+    def closeEvent(self, event):
+        """Hide to tray instead of closing"""
+        event.ignore()
+        self.hide()
+        self.tray.showMessage(
+            APP_NAME,
+            "Running in system tray\nClick icon to restore",
+            QtWidgets.QSystemTrayIcon.MessageIcon.Information,
+            2000
+        )
+
+    # === DATA MANAGEMENT ===
     def _refresh_all(self):
+        """Refresh all UI elements"""
         self._refresh_list()
         self._refresh_profiles()
 
     def _refresh_list(self):
+        """Refresh the initiative order list"""
         self.list_widget.clear()
         for i, name in enumerate(self.class_ini, 1):
             item = QtWidgets.QListWidgetItem(f"{i}. {name}")
@@ -277,6 +399,7 @@ class DofusManager(QtWidgets.QMainWindow):
             self.list_widget.addItem(item)
 
     def _refresh_profiles(self):
+        """Refresh profiles dropdown"""
         current = self.combo_profiles.currentText()
         self.combo_profiles.clear()
         self.combo_profiles.addItems(sorted(self.profiles.keys()))
@@ -284,163 +407,259 @@ class DofusManager(QtWidgets.QMainWindow):
             self.combo_profiles.setCurrentText(current)
 
     def _sync_from_list(self):
+        """Sync class order from list widget"""
         self.class_ini = [
             self.list_widget.item(i).data(Qt.ItemDataRole.UserRole)
             for i in range(self.list_widget.count())
         ]
         self._refresh_list()
         self._save_config()
-
-    def _update_script_paths(self):
-        self.lbl_scripts.setText(
-            f"Rename: {RENAME_SCRIPT.name}\n"
-            f"Forward: {CYCLE_FORWARD.name}\n"
-            f"Click & Forward: {CLICK_CYCLE_FORWARD.name}\n"
-            f"Backward: {CYCLE_BACKWARD.name}\n"
-            f"Workspace: {TOGGLE_WORKSPACE.name}\n\n"
-            f"📁 {SCRIPT_DIR}"
-        )
+        self._show_status("✅ Order updated", 2000)
 
     def _save_config(self):
+        """Save configuration to file"""
         cfg = {'class_ini': self.class_ini}
         save_json(CONFIG_FILE, cfg)
 
-    def _update_scripts(self):
-        generate_rename_script(self.class_ini)
-        generate_cycle_forward(self.class_ini)
-        generate_cycle_backward(self.class_ini)
-        generate_toggle_workspace()
-        generate_click_cycle()
-        self._update_script_paths()
+    def _show_status(self, message, duration=3000):
+        """Show status message"""
+        self.status_label.setText(message)
+        QtCore.QTimer.singleShot(duration, lambda: self.status_label.setText("Ready"))
 
-    def _generate_rename_only(self):
-        generate_rename_script(self.class_ini)
-
-    def _generate_cycle_only(self):
-        generate_cycle_forward(self.class_ini)
-        generate_cycle_backward(self.class_ini)
-
-    def _generate_click_cycle_only(self):
-        generate_click_cycle()
-
-    def _generate_workspace_only(self):
-        generate_toggle_workspace()
-
-    def _generate_all_scripts(self):
-        self._update_scripts()
-
-    # CLASS ACTIONS
+    # === CLASS MANAGEMENT ===
     def _add_class(self):
-        text, ok = QtWidgets.QInputDialog.getText(self, "Add Class", "Class name:")
+        """Add new class to order"""
+        text, ok = QtWidgets.QInputDialog.getText(
+            self, "Add Class", "Class name:", 
+            QtWidgets.QLineEdit.EchoMode.Normal
+        )
         if ok and text.strip():
             self.class_ini.append(text.strip())
             self._refresh_list()
             self._save_config()
+            self._show_status(f"✅ Added: {text.strip()}")
 
     def _rename_class(self):
+        """Rename selected class"""
         idx = self.list_widget.currentRow()
         if idx < 0:
+            self._show_status("⚠️ Select a class first")
             return
+        
         old_name = self.class_ini[idx]
-        text, ok = QtWidgets.QInputDialog.getText(self, "Rename", "New name:", text=old_name)
+        text, ok = QtWidgets.QInputDialog.getText(
+            self, "Rename Class", "New name:", 
+            QtWidgets.QLineEdit.EchoMode.Normal, old_name
+        )
         if ok and text.strip():
             self.class_ini[idx] = text.strip()
             self._refresh_list()
             self.list_widget.setCurrentRow(idx)
             self._save_config()
+            self._show_status(f"✅ Renamed to: {text.strip()}")
 
     def _remove_class(self):
+        """Remove selected class"""
         idx = self.list_widget.currentRow()
         if idx < 0:
+            self._show_status("⚠️ Select a class first")
             return
+        
         name = self.class_ini[idx]
         reply = QtWidgets.QMessageBox.question(
-            self, "Confirm", f"Delete {name}?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
+            self, "Confirm Delete", 
+            f"Delete '{name}' from order?",
+            QtWidgets.QMessageBox.StandardButton.Yes | 
+            QtWidgets.QMessageBox.StandardButton.No
         )
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             del self.class_ini[idx]
             self._refresh_list()
             self._save_config()
+            self._show_status(f"✅ Deleted: {name}")
 
     def _reset_to_default(self):
+        """Reset to default class order"""
         reply = QtWidgets.QMessageBox.question(
             self, "Confirm Reset",
-            f"Reset to default classes?\n({', '.join(DEFAULT_CLASS_INI)})",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
+            f"Reset to default?\n({', '.join(DEFAULT_CLASS_INI)})",
+            QtWidgets.QMessageBox.StandardButton.Yes | 
+            QtWidgets.QMessageBox.StandardButton.No
         )
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             self.class_ini = DEFAULT_CLASS_INI.copy()
             self._refresh_list()
             self._save_config()
+            self._show_status("✅ Reset to default")
 
-    # PROFILE ACTIONS
+    # === PROFILE MANAGEMENT ===
     def _save_profile(self):
-        text, ok = QtWidgets.QInputDialog.getText(self, "Save Profile", "Profile name:")
+        """Save current order as profile"""
+        text, ok = QtWidgets.QInputDialog.getText(
+            self, "Save Profile", "Profile name:"
+        )
         if ok and text.strip():
             name = text.strip()
             self.profiles[name] = list(self.class_ini)
             save_json(PROFILES_FILE, self.profiles)
             self._refresh_profiles()
             self.combo_profiles.setCurrentText(name)
+            self._show_status(f"✅ Profile saved: {name}")
 
     def _load_profile(self):
+        """Load selected profile"""
         name = self.combo_profiles.currentText()
         if not name:
+            self._show_status("⚠️ No profile selected")
             return
+        
         if name in self.profiles:
             self.class_ini = list(self.profiles[name])
             self._refresh_list()
             self._save_config()
+            self._show_status(f"✅ Loaded: {name}")
 
     def _delete_profile(self):
+        """Delete selected profile"""
         name = self.combo_profiles.currentText()
         if not name:
+            self._show_status("⚠️ No profile selected")
             return
+        
         reply = QtWidgets.QMessageBox.question(
-            self, "Confirm", f"Delete profile '{name}'?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No
+            self, "Confirm Delete", 
+            f"Delete profile '{name}'?",
+            QtWidgets.QMessageBox.StandardButton.Yes | 
+            QtWidgets.QMessageBox.StandardButton.No
         )
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
             del self.profiles[name]
             save_json(PROFILES_FILE, self.profiles)
             self._refresh_profiles()
+            self._show_status(f"✅ Deleted: {name}")
 
-    # RENAME DIALOG
+    # === SCRIPT GENERATION ===
+    def _generate_cycle_only(self):
+        """Generate cycle scripts only"""
+        generate_cycle_forward(self.class_ini)
+        generate_cycle_backward(self.class_ini)
+        self._show_status("✅ Cycle scripts generated")
+
+    def _generate_click_cycle_only(self):
+        """Generate click & cycle script"""
+        generate_click_cycle()
+        self._show_status("✅ Click & cycle generated")
+
+    def _generate_workspace_only(self):
+        """Generate workspace toggle script"""
+        generate_toggle_workspace()
+        self._show_status("✅ Workspace script generated")
+
+    def _generate_all_scripts(self):
+        """Generate all scripts"""
+        generate_rename_script(self.class_ini)
+        generate_cycle_forward(self.class_ini)
+        generate_cycle_backward(self.class_ini)
+        generate_toggle_workspace()
+        generate_click_cycle()
+        self._show_status("✅ All scripts generated")
+
+    def _open_script_folder(self):
+        """Open scripts folder in file manager"""
+        try:
+            run_cmd(['xdg-open', str(SCRIPT_DIR)])
+            self._show_status("✅ Folder opened")
+        except Exception:
+            self._show_status("❌ Cannot open folder")
+
+    # === RENAME DIALOG ===
+    def _quick_rename(self):
+        """Quick rename without dialog (all workspaces)"""
+        generate_rename_script(self.class_ini, workspace=None)
+        try:
+            result = run_cmd([str(RENAME_SCRIPT)])
+            if result[2] == 0:
+                self.tray.showMessage(
+                    "Dofus Manager",
+                    "✅ Windows renamed successfully",
+                    QtWidgets.QSystemTrayIcon.MessageIcon.Information,
+                    2000
+                )
+            else:
+                self.tray.showMessage(
+                    "Dofus Manager",
+                    "⚠️ Rename failed - check window count",
+                    QtWidgets.QSystemTrayIcon.MessageIcon.Warning,
+                    3000
+                )
+        except Exception as e:
+            self.tray.showMessage(
+                "Dofus Manager",
+                f"❌ Error: {str(e)}",
+                QtWidgets.QSystemTrayIcon.MessageIcon.Critical,
+                3000
+            )
+
     def _show_rename_dialog(self):
+        """Show workspace selection dialog for renaming"""
         dialog = QtWidgets.QDialog(self)
         dialog.setWindowTitle("Rename Windows")
-        dialog.setMinimumWidth(400)
+        dialog.setFixedWidth(280)
 
         layout = QtWidgets.QVBoxLayout(dialog)
-        info = QtWidgets.QLabel("Select workspace to rename windows (optional):")
+        layout.setSpacing(8)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        # Info label
+        info = QtWidgets.QLabel("Select workspace (optional):")
+        info.setStyleSheet("font-size: 11px; color: #cccccc;")
         layout.addWidget(info)
 
-        ws_layout = QtWidgets.QHBoxLayout()
+        # Workspace options
+        ws_layout = QtWidgets.QVBoxLayout()
+        ws_layout.setSpacing(4)
+        
         self.radio_all = QtWidgets.QRadioButton("All workspaces")
         self.radio_all.setChecked(True)
+        self.radio_all.setStyleSheet("font-size: 11px;")
         ws_layout.addWidget(self.radio_all)
+        
         self.radio_specific = QtWidgets.QRadioButton("Specific workspace:")
+        self.radio_specific.setStyleSheet("font-size: 11px;")
         ws_layout.addWidget(self.radio_specific)
+        
         layout.addLayout(ws_layout)
 
+        # Workspace combo
         self.combo_workspace = QtWidgets.QComboBox()
         self.combo_workspace.setEnabled(False)
-
+        self.combo_workspace.setFixedHeight(24)
+        
         workspaces = get_workspaces()
         for ws_num, ws_name in workspaces:
             self.combo_workspace.addItem(f"{ws_num}: {ws_name}", ws_num)
         layout.addWidget(self.combo_workspace)
 
-        self.radio_specific.toggled.connect(lambda checked: self.combo_workspace.setEnabled(checked))
+        self.radio_specific.toggled.connect(
+            lambda checked: self.combo_workspace.setEnabled(checked)
+        )
 
-        layout.addSpacing(20)
+        layout.addSpacing(12)
 
+        # Buttons
         btn_layout = QtWidgets.QHBoxLayout()
-        btn_execute = QtWidgets.QPushButton("🔄 Execute Rename")
+        btn_layout.setSpacing(6)
+        
+        btn_execute = QtWidgets.QPushButton("🔄 Execute")
+        btn_execute.setStyleSheet(get_action_button_style("#0d7377"))
+        btn_execute.setFixedHeight(32)
         btn_execute.clicked.connect(lambda: self._execute_rename(dialog))
+        
         btn_cancel = QtWidgets.QPushButton("Cancel")
+        btn_cancel.setStyleSheet(get_action_button_style("#555555"))
+        btn_cancel.setFixedHeight(32)
         btn_cancel.clicked.connect(dialog.reject)
+        
         btn_layout.addWidget(btn_execute)
         btn_layout.addWidget(btn_cancel)
         layout.addLayout(btn_layout)
@@ -448,25 +667,19 @@ class DofusManager(QtWidgets.QMainWindow):
         dialog.exec()
 
     def _execute_rename(self, dialog):
+        """Execute rename with selected workspace"""
         workspace = None
         if self.radio_specific.isChecked():
             workspace = self.combo_workspace.currentData()
-        # Generate script with workspace filter
+        
+        # Generate and execute script
         generate_rename_script(self.class_ini, workspace)
-
-        # Execute the script
         try:
             result = run_cmd([str(RENAME_SCRIPT)])
-            code = result[2]
-            if code == 0:
+            if result[2] == 0:
+                self._show_status("✅ Windows renamed")
                 dialog.accept()
             else:
-                self.status.showMessage("⚠️ Rename error: check windows", 5000)
+                self._show_status("⚠️ Check window count")
         except Exception as e:
-            self.status.showMessage(f"❌ Error: {str(e)}", 5000)
-
-    def _open_script_folder(self):
-        try:
-            run_cmd(['xdg-open', str(SCRIPT_DIR)])
-        except Exception:
-            self.status.showMessage("❌ Cannot open folder", 3000)
+            self._show_status(f"❌ Error: {str(e)}")

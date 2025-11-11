@@ -166,7 +166,7 @@ TRANSLATIONS = {
         'reset_tooltip': 'Réinitialiser aux classes par défaut\n(Feca, Cra, Enu, Panda, Sadi)',
         
         # Scripts
-        'cycle_bidirectional': '🔄 Cycle <>',
+        'cycle_bidirectional': '🔄 Cycle',
         'rename_windows': '✏️ Renommer les fenêtres',
         'click_cycle': '🖱️ Clic et Cycle',
         'workspaces': '🗃️ Espaces de Travail',

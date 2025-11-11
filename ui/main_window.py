@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 from PyQt6 import QtWidgets, QtGui, QtCore
 from PyQt6.QtCore import Qt
 
@@ -25,7 +16,6 @@ from core.utils import make_executable, run_cmd
 from ui.widgets import CompactDraggableList
 from ui.theme import apply_compact_theme, get_icon_button_style, get_action_button_style
 
-
 class DofusManager(QtWidgets.QMainWindow):
     """Main compact window manager for Dofus multi-instance control"""
     
@@ -33,8 +23,8 @@ class DofusManager(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle(APP_NAME)
         
-        # Compact window size - stays small and tidy
-        self.setFixedSize(320, 650)
+        # Compact window size 
+        self.setFixedSize(320, 750)
         
         # Window flags for compact mode (always on top option)
         self.setWindowFlags(
@@ -80,12 +70,11 @@ class DofusManager(QtWidgets.QMainWindow):
 
         main_layout.addStretch()
 
-        # STATUS LABEL seulement
+        # STATUS LABEL
         self.status_label = QtWidgets.QLabel("Ready")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color:#888;font-size:9px;padding:2px;")
         main_layout.addWidget(self.status_label)
-
 
     def _create_header(self):
         """Create compact header with main action button"""
@@ -138,7 +127,7 @@ class DofusManager(QtWidgets.QMainWindow):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(self.list_widget)
-        scroll.setStyleSheet("border:none;")  # pour garder le style propre
+        scroll.setStyleSheet("border:none;")
         section.addWidget(scroll, stretch=1)
 
         return section
@@ -228,7 +217,7 @@ class DofusManager(QtWidgets.QMainWindow):
         section = QtWidgets.QVBoxLayout()
         section.setSpacing(4)
 
-        label = QtWidgets.QLabel("⚡ Create or Update scripts with current initiative")
+        label = QtWidgets.QLabel("⚡ Create or Update Scripts with abovex initiative")
         label.setStyleSheet("""
             font-size: 11px; 
             font-weight: bold; 
@@ -245,13 +234,13 @@ class DofusManager(QtWidgets.QMainWindow):
         buttons = [
             ("🔄 Cycle <->", "Generate cycle forward/backward scripts", "#14b8a6", 
              self._generate_cycle_only, 0, 0),
-             ("✏️ Rename windows", "Rename windows script", "#8b5cf6", 
+            ("✏️ Rename windows", "Rename windows script", "#8b5cf6", 
              self._generate_rename_only, 0, 1),
             ("🖱️ Click and Cycle", "Generate click & cycle script", "#84AB58", 
              self._generate_click_cycle_only, 1, 0),
             ("🗃️ Workspaces", "Generate workspace toggle script", "#f59e0b", 
              self._generate_workspace_only, 1, 1),
-            ]
+        ]
 
         for text, tooltip, color, callback, row, col in buttons:
             btn = QtWidgets.QPushButton(text)
@@ -303,11 +292,22 @@ class DofusManager(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.information(
             self,
             "About",
-            f"{APP_NAME}\n\n"
-            "A compact window manager for Dofus\n"
-            "multi-instance control.\n\n"
-            "Scripts location:\n"
-            f"{SCRIPT_DIR}"
+            "📋 Script descriptions:\n\n"
+            f"• cycle_forward.sh: cycle through dofus windows with initiative defined.\n"
+            f"• cycle_backward.sh: cycle backward through dofus windows with initiative defined.\n"
+            f"• rename_windows.sh: rename opened windows with initiative defined.\n"
+            f"• click_cycle_forward.sh: click and execute cycle_forward.sh\n"
+            f"• toggle_workspace.sh cycle through opened workspaces\n\n"
+            "📋 Scripts locations:\n\n"
+            f"• {SCRIPT_DIR}\n\n"
+            "📋 Bind following scripts to your keyboard/mouse: \n\n"
+            f"• {CYCLE_FORWARD}\n"
+            f"• {CYCLE_BACKWARD}\n"
+            f"• {CLICK_CYCLE_FORWARD}\n"
+            f"• {TOGGLE_WORKSPACE}\n\n"
+
+            "📋 This script doesn't need to be bind: \n\n"
+            f"• {RENAME_SCRIPT}\n"
         )
 
     # === SYSTEM TRAY ===
@@ -352,7 +352,7 @@ class DofusManager(QtWidgets.QMainWindow):
                 self.hide()
 
     def closeEvent(self, event):
-        """Ask user what to do on close"""
+        """Ask user what to do on close"""       
         menu = QtWidgets.QMessageBox(self)
         menu.setWindowTitle("Exit Options")
         menu.setText("What do you want to do?")
@@ -450,17 +450,10 @@ class DofusManager(QtWidgets.QMainWindow):
             return
         
         name = self.class_ini[idx]
-        reply = QtWidgets.QMessageBox.question(
-            self, "Confirm Delete", 
-            f"Delete '{name}' from order?",
-            QtWidgets.QMessageBox.StandardButton.Yes | 
-            QtWidgets.QMessageBox.StandardButton.No
-        )
-        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            del self.class_ini[idx]
-            self._refresh_list()
-            self._save_config()
-            self._show_status(f"✅ Deleted: {name}")
+        del self.class_ini[idx]
+        self._refresh_list()
+        self._save_config()
+        self._show_status(f"✅ Deleted: {name}")
 
     def _reset_to_default(self):
         """Reset to default class order"""

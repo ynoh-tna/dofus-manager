@@ -300,22 +300,28 @@ class DofusManager(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.information(
             self,
             "About",
-            "📋 Script descriptions:\n\n"
-            f"• cycle_forward.sh: cycle through dofus windows with initiative defined.\n"
-            f"• cycle_backward.sh: cycle backward through dofus windows with initiative defined.\n"
-            f"• rename_windows.sh: rename opened windows with initiative defined.\n"
-            f"• reorganize_windows.sh: reorganize windows left to right by order.\n"
-            f"• click_cycle_forward.sh: click and execute cycle_forward.sh\n"
-            f"• toggle_workspace.sh: cycle through opened workspaces\n\n"
-            "📋 Scripts locations:\n\n"
-            f"• {SCRIPT_DIR}\n\n"
-            "📋 Bind following scripts to your keyboard/mouse: \n\n"
-            f"• {CYCLE_FORWARD}\n"
-            f"• {CYCLE_BACKWARD}\n"
-            f"• {CLICK_CYCLE_FORWARD}\n"
-            f"• {TOGGLE_WORKSPACE}\n"
-            f"• {REORGANIZE_SCRIPT}\n"
+            "⚙️ Dofus Manager\n\n"
+            "Manage and organize your Dofus windows efficiently.\n\n"
+            "📌 Buttons:\n"
+            "• Rename  — Rename opened Dofus windows based on initiative order.\n"
+            "• Reorder — Reorganize windows visually by initiative order.\n\n"
+            "🧩 Scripts overview:\n"
+            "• cycle_forward.sh     — Cycle forward through windows.\n"
+            "• cycle_backward.sh    — Cycle backward through windows.\n"
+            "• rename_windows.sh    — Rename all opened windows.\n"
+            "• reorganize_windows.sh— Align windows left to right.\n"
+            "• click_cycle_forward.sh— Click + cycle forward.\n"
+            "• toggle_workspace.sh  — Switch between workspaces.\n\n"
+            "📁 Script location:\n"
+            f"{SCRIPT_DIR}\n\n"
+            "🎮 Suggested key bindings:\n"
+            f"{CYCLE_FORWARD}\n"
+            f"{CYCLE_BACKWARD}\n"
+            f"{CLICK_CYCLE_FORWARD}\n"
+            f"{TOGGLE_WORKSPACE}\n"
+            "© 2025 Dofus Manager"
         )
+
 
     # === SYSTEM TRAY ===
     def _create_tray(self):

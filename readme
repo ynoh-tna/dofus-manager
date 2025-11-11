@@ -1,130 +1,166 @@
-# 🧩 Dofus Window Manager
+# Dofus Window Manager
 
-A lightweight **multi-instance window manager** for Dofus, built with **Python + PyQt6**.
-It allows you to **rename**, **organize**, and **switch** between multiple Dofus windows instantly — optimized for **keyboard-driven workflows** and **zero-latency automation**.
-
----
-
-## 🚀 Features
-
-* ⚡ **Instant window renaming**
-* 🔁 **Cycle between Dofus windows** (forward/backward)
-* 🖥️ **Toggle workspaces** with a single key
-* 📁 **Profiles management** — save/load different window setups
-* 🧠 **Script generator** — automatically creates shell scripts for each action
-* 🪶 **Fast and minimal PyQt6 GUI** for setup and configuration
-* 🎯 Designed for **power users** — full keyboard or macro binding support
+*[English version below](#english-version)*
 
 ---
 
-## 🧱 Project Structure
+## Version Française 🇫🇷
+
+### 🎮 Gestionnaire de Fenêtres Dofus
+
+Un **gestionnaire multi-instances léger** pour Dofus, conçu avec **Python + PyQt6**.
+
+Renommez, organisez et basculez entre plusieurs fenêtres Dofus instantanément — optimisé pour les **workflows au clavier** et l'**automatisation sans latence**.
+
+#### 🚀 Fonctionnalités
+
+* ⚡ **Renommage instantané des fenêtres**
+* 🔁 **Cycle entre les fenêtres Dofus** (avant/arrière)
+* 🖥️ **Basculer les espaces de travail** avec une seule touche
+* 📁 **Gestion des profils** — sauvegardez/chargez différentes configurations
+* 🧠 **Générateur de scripts automatique** — crée les scripts shell pour chaque action
+* 🪶 **Interface PyQt6 minimaliste et rapide**
+* 🌍 **Support multilingue** — basculez entre français et anglais
+* 🎯 Conçu pour les **power users** — support complet des raccourcis clavier
+
+#### 📋 Structure du Projet
 
 ```
 dofus_window_manager/
-├── main.py                  # Entry point (PyQt6 GUI)
+├── main.py                    # Point d'entrée de l'application
 ├── core/
-│   ├── profile_manager.py   # Handles saving/loading of window profiles
-│   ├── window_manager.py    # Controls window naming and workspace actions
-│   ├── script_generator.py  # Builds external shell scripts
+│   ├── config.py              # Configuration centralisée et chemins des fichiers
+│   ├── scripts.py             # Génération automatique des scripts shell
+│   ├── workspace.py           # Gestion des espaces de travail (wmctrl)
+│   ├── utils.py               # Utilitaires (exécution, permissions)
+│   ├── i18n.py                # Système de localisation (FR/EN)
+│   └── __init__.py
 ├── ui/
-│   ├── main_window.ui       # Qt Designer layout
-│   ├── icons/               # Optional icons
-├── scripts/
-│   ├── rename_windows.sh
-│   ├── cycle_forward.sh
-│   ├── cycle_backward.sh
-│   ├── toggle_workspace.sh
+│   ├── main_window.py         # Fenêtre principale (PyQt6)
+│   ├── widgets.py             # Widgets personnalisés (liste draggable)
+│   ├── theme.py               # Thème sombre moderne
+│   └── __init__.py
+├── extensions/
+│   ├── overlay.py             # Placeholder pour overlay futur
+│   └── __init__.py
+├── .gitignore
+└── README.md
 ```
 
----
+#### 📖 Description des Fichiers Clés
 
-## ⚙️ Requirements
+**`core/config.py`**
+Configuration centralisée : chemins des fichiers de configuration, profils, scripts. Gère le chargement/sauvegarde JSON.
+
+**`core/scripts.py`**
+Génère dynamiquement les scripts bash exécutables. Chaque script utilise `wmctrl` et `xdotool` pour contrôler les fenêtres.
+
+**`core/i18n.py`**
+Système de localisation complet. Maintient les dictionnaires de traductions FR/EN et gère la sauvegarde de la langue préférée.
+
+**`core/workspace.py`**
+Récupère la liste des espaces de travail via `wmctrl -d`.
+
+**`ui/main_window.py`**
+Cœur de l'interface PyQt6 : dialogues, gestion des profils, génération des scripts, notifications de statut.
+
+**`ui/widgets.py`**
+Liste personnalisée avec drag & drop pour réorganiser l'ordre d'initiative.
+
+**`ui/theme.py`**
+Thème sombre moderne avec support des couleurs et effets de survol.
+
+#### ⚙️ Prérequis
 
 * **Python 3.10+**
 * **PyQt6**
-* **wmctrl** and/or **xdotool** (Linux window control utilities)
+* **wmctrl** et **xdotool** (utilitaires Linux de contrôle de fenêtres)
 
-Install dependencies:
+Installation des dépendances :
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install PyQt6
 sudo apt install wmctrl xdotool
-deactivate
 ```
 
----
+#### 💡 Utilisation
 
-## 💡 Usage
-
-### 1. Launch the GUI
+##### 1. Lancer l'application
 
 ```bash
 python3 main.py
 ```
 
-### 2. Configure your Dofus windows
+##### 2. Configurer vos fenêtres Dofus
 
-* Add or edit window titles
-* Assign them to a workspace
-* Save your setup as a profile
+* Ajoutez ou modifiez les noms de classes
+* Définissez l'ordre d'initiative
+* Sauvegardez votre configuration en tant que profil
 
-### 3. Generate control scripts
+##### 3. Générer les scripts
 
-Click **“Generate Scripts”** — this will create:
+Cliquez sur **"Générer Tous les Scripts"** pour créer :
 
-* `cycle_forward.sh`
-* `cycle_backward.sh`
-* `rename_windows.sh`
-* `toggle_workspace.sh`
+* `cycle_forward.sh` — Cycle avant
+* `cycle_backward.sh` — Cycle arrière
+* `rename_windows.sh` — Renomme les fenêtres
+* `reorganize_windows.sh` — Réorganise les fenêtres
+* `click_cycle_forward.sh` — Clic + cycle
+* `toggle_workspace.sh` — Bascule d'espace de travail
 
-### 4. Bind keys (optional)
+##### 4. Lier les touches (optionnel)
 
-Bind the generated scripts to your favorite hotkeys:
+Liez les scripts générés à vos touches préférées :
 
-* Cycle forward → `F2`
-* Cycle backward → `F3`
-* Rename windows → `F11`
-* Toggle workspace → `F12`
-
----
-
-### 5. Make app
-
-
-* pip install pyinstaller
-* pyinstaller --noconsole --onefile main.py
-
-Option 1 - Run the app directly:
-* ./dist/main
-
-
-Option 2 - Create App:
-*  nano ~/.local/share/applications/dofus_manager.desktop
-
+```bash
+# Exemple avec openbox (~/.config/openbox/rc.xml)
+<keybind key="F2">
+  <action name="Execute">
+    <command>~/.config/dofus_window_manager/scripts/cycle_forward.sh</command>
+  </action>
+</keybind>
 ```
+
+##### 5. Compiler l'application (optionnel)
+
+```bash
+pip install pyinstaller
+pyinstaller --noconsole --onefile main.py
+```
+
+Ou créer un lanceur desktop :
+
+```bash
+nano ~/.local/share/applications/dofus_manager.desktop
+```
+
+```ini
 [Desktop Entry]
 Name=Dofus Manager
-Exec=~/Documents/Jeux/Dofus/dofus_manager/dist/main
-Icon=/~/Documents/Jeux/Dofus/dofus_manager/assets/icon.png
+Exec=~/path/to/dist/main
+Icon=~/path/to/icon.png
 Type=Application
 Categories=Utility;
 Terminal=false
 ```
 
-* chmod +x ~/.local/share/applications/dofus_manager.desktop
+```bash
+chmod +x ~/.local/share/applications/dofus_manager.desktop
+```
 
+#### 📝 Notes
 
----
-## 📝 Notes
+* Application optimisée pour **Linux** (testée sur Linux Mint Cinnamon 22)
+* L'interface est principalement pour la configuration
+* L'utilisation quotidienne devrait reposer sur les **raccourcis clavier** ou macros externes
+* Les scripts sont indépendants et peuvent être exécutés directement
 
-* This tool is optimized for Linux (tested on Linux Mint Cinnamon 22).
-* GUI is primarily for configuration; daily use should rely on **keyboard shortcuts** or external macros for maximum speed.
-* Scripts are generated in the `scripts/` directory and can be executed independently.
+#### 🌍 Changement de Langue
 
----
+Accédez aux paramètres pour basculer entre français et anglais. La langue est sauvegardée automatiquement.
 
-## 📄 License
+#### 📄 Licence
 
 MIT License

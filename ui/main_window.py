@@ -104,7 +104,7 @@ class DofusManager(QtWidgets.QMainWindow):
         # Reorganize button
         btn_reorganize = QtWidgets.QPushButton("🔄 ReOrder")
         btn_reorganize.setStyleSheet(get_action_button_style("#8b5cf6"))
-        btn_reorganize.setFixedSize(100, 28)
+        btn_reorganize.setFixedSize(80, 28)
         btn_reorganize.setToolTip("Reorganize windows left to right\naccording to initiative order")
         btn_reorganize.clicked.connect(self._quick_reorganize)
         header.addWidget(btn_reorganize)

@@ -4,26 +4,25 @@
 
 ### 🎮 Gestionnaire de Fenêtres Dofus sous Linux pour le multicompte
 
-* Ne modifie pas le client et n’automatise aucune action en jeu, ce qui devrait rester conforme aux CGU.
+* Ne modifie pas le client et n’automatise aucune action en jeu, ce qui reste conforme aux CGU.
 
-#### 🖥️ Testé sur les environnements :
+#### 🖥️ Environnements testés
 
-* OS: Linux mint 21 et 22. 
-* Desktop: cinnamon desktop
-
+* **OS** : Linux Mint 21 et 22
+* **Desktop** : Cinnamon
 
 #### 🚀 Fonctionnalités
 
 * ⚡ **Renommage instantané des fenêtres**
-* 🔁 **Genere des bash pour le switch de fenetres Dofus** (avant/arrière)
+* 🔁 **Génération de scripts bash** pour le switch de fenêtres Dofus (avant/arrière)
 * 🖥️ **Switch entre les espaces de travail** avec une seule touche
-* 📁 **Gestion des profils d initiatives** — sauvegardez/chargez différentes configurations
+* 📁 **Gestion des profils d’initiatives** — sauvegarde et chargement de configurations
 * 🧠 **Générateur de scripts automatique** — crée les scripts shell pour chaque action
 * 🪶 **Interface PyQt6 minimaliste et rapide**
-* 🌍 **Support multilingue** — basculez entre français et anglais
-* 🎯 Conçu pour les **multicompte** — support complet des raccourcis clavier
+* 🌍 **Support multilingue** — français et anglais
+* 🎯 **Optimisé pour le multicompte** — raccourcis clavier complets
 
-#### 📋 Structure du Projet
+#### 📋 Structure du projet
 
 ```
 dofus_window_manager/
@@ -51,7 +50,7 @@ dofus_window_manager/
 
 * **Python 3.10+**
 * **PyQt6**
-* **wmctrl** et **xdotool** (utilitaires Linux de contrôle de fenêtres)
+* **wmctrl** et **xdotool** (utilitaires Linux pour contrôler les fenêtres)
 
 Installation des dépendances :
 
@@ -72,9 +71,9 @@ python3 main.py
 
 ##### 2. Configurer vos fenêtres Dofus
 
-* Ajoutez ou modifiez les noms de classes
-* Définissez l'ordre d'initiative
-* Sauvegardez votre configuration en tant que profil
+* Ajouter ou modifier les noms de classes
+* Définir l'ordre d'initiative
+* Sauvegarder la configuration en tant que profil
 
 ##### 3. Générer les scripts
 
@@ -82,8 +81,8 @@ Cliquez sur **"Générer Tous les Scripts"** pour créer :
 
 * `cycle_forward.sh` — Cycle avant
 * `cycle_backward.sh` — Cycle arrière
-* `rename_windows.sh` — Renomme les fenêtres
-* `reorganize_windows.sh` — Réorganise les fenêtres
+* `rename_windows.sh` — Renommer les fenêtres
+* `reorganize_windows.sh` — Réorganiser les fenêtres
 * `click_cycle_forward.sh` — Clic + cycle
 * `toggle_workspace.sh` — Bascule d'espace de travail
 
@@ -116,6 +115,6 @@ chmod +x ~/.local/share/applications/dofus_manager.desktop
 
 #### 📝 Notes
 
-* L'interface est principalement pour la configuration des scripts
-* L'utilisation quotidienne devrait reposer sur les **raccourcis clavier** bind avec les scripts generes
+* L'interface sert principalement à la configuration des scripts
+* L’utilisation quotidienne repose sur les **raccourcis clavier** liés aux scripts générés
 * Les scripts sont indépendants et peuvent être exécutés directement

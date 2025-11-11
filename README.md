@@ -13,7 +13,7 @@
 
 #### 🖼️ Aperçu de l'interface
 
-<img src="assets/main.png" alt="Interface Dofus Window Manager" width="400"/>
+<img src="assets/main.png" alt="Interface Dofus Window Manager" width="200"/>
 
 #### 🚀 Fonctionnalités
 

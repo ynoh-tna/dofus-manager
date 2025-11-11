@@ -11,6 +11,10 @@
 * **OS** : Linux Mint 21 et 22
 * **Desktop** : Cinnamon
 
+#### 🖼️ Aperçu de l'interface
+
+![Interface Dofus Window Manager](assets/main.png)
+
 #### 🚀 Fonctionnalités
 
 * ⚡ **Renommage instantané des fenêtres**

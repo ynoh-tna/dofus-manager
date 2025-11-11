@@ -228,7 +228,7 @@ class DofusManager(QtWidgets.QMainWindow):
         section = QtWidgets.QVBoxLayout()
         section.setSpacing(4)
 
-        label = QtWidgets.QLabel("⚡ Create or Generate Scripts")
+        label = QtWidgets.QLabel("⚡ Create or Update scripts with current initiative")
         label.setStyleSheet("""
             font-size: 11px; 
             font-weight: bold; 
@@ -245,13 +245,13 @@ class DofusManager(QtWidgets.QMainWindow):
         buttons = [
             ("🔄 Cycle <->", "Generate cycle forward/backward scripts", "#14b8a6", 
              self._generate_cycle_only, 0, 0),
+             ("✏️ Rename windows", "Rename windows script", "#8b5cf6", 
+             self._generate_rename_only, 0, 1),
             ("🖱️ Click and Cycle", "Generate click & cycle script", "#84AB58", 
-             self._generate_click_cycle_only, 0, 1),
+             self._generate_click_cycle_only, 1, 0),
             ("🗃️ Workspaces", "Generate workspace toggle script", "#f59e0b", 
-             self._generate_workspace_only, 1, 0),
-            ("✏️ Rename windows", "Rename windows script", "#8b5cf6", 
-             self._generate_rename_only, 1, 1),
-        ]
+             self._generate_workspace_only, 1, 1),
+            ]
 
         for text, tooltip, color, callback, row, col in buttons:
             btn = QtWidgets.QPushButton(text)

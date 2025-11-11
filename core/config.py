@@ -13,6 +13,7 @@ SCRIPT_DIR = CONFIG_DIR / "scripts"
 SCRIPT_DIR.mkdir(exist_ok=True)
 
 RENAME_SCRIPT = SCRIPT_DIR / "rename_windows.sh"
+REORGANIZE_SCRIPT = SCRIPT_DIR / "reorganize_windows.sh"
 CLICK_CYCLE_FORWARD = SCRIPT_DIR / "click_cycle_forward.sh"
 CYCLE_FORWARD = SCRIPT_DIR / "cycle_forward.sh"
 CYCLE_BACKWARD = SCRIPT_DIR / "cycle_backward.sh"

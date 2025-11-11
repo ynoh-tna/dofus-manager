@@ -3,13 +3,13 @@ from PyQt6.QtCore import Qt
 
 from core.config import (
     APP_NAME, CONFIG_FILE, PROFILES_FILE, DEFAULT_CLASS_INI,
-    RENAME_SCRIPT, CLICK_CYCLE_FORWARD, CYCLE_FORWARD, CYCLE_BACKWARD, 
+    RENAME_SCRIPT, REORGANIZE_SCRIPT, CLICK_CYCLE_FORWARD, CYCLE_FORWARD, CYCLE_BACKWARD, 
     TOGGLE_WORKSPACE, SCRIPT_DIR
 )
 from core.config import load_json, save_json
 from core.scripts import (
-    generate_rename_script, generate_cycle_forward, generate_cycle_backward, 
-    generate_toggle_workspace, generate_click_cycle
+    generate_rename_script, generate_reorganize_script, generate_cycle_forward, 
+    generate_cycle_backward, generate_toggle_workspace, generate_click_cycle
 )
 from core.workspace import get_workspaces
 from core.utils import make_executable, run_cmd
@@ -94,12 +94,20 @@ class DofusManager(QtWidgets.QMainWindow):
         header.addStretch()
 
         # Main rename button
-        btn_rename = QtWidgets.QPushButton("🔄 Rename")
+        btn_rename = QtWidgets.QPushButton("🔧 Rename")
         btn_rename.setStyleSheet(get_action_button_style("#0d7377"))
         btn_rename.setFixedSize(80, 28)
         btn_rename.setToolTip("Rename all Dofus windows\naccording to initiative order")
         btn_rename.clicked.connect(self._show_rename_dialog)
         header.addWidget(btn_rename)
+
+        # Reorganize button
+        btn_reorganize = QtWidgets.QPushButton("🔄 ReOrder")
+        btn_reorganize.setStyleSheet(get_action_button_style("#8b5cf6"))
+        btn_reorganize.setFixedSize(100, 28)
+        btn_reorganize.setToolTip("Reorganize windows left to right\naccording to initiative order")
+        btn_reorganize.clicked.connect(self._quick_reorganize)
+        header.addWidget(btn_reorganize)
 
         # Settings button (gear icon)
         btn_settings = QtWidgets.QPushButton("⚙️")
@@ -217,7 +225,7 @@ class DofusManager(QtWidgets.QMainWindow):
         section = QtWidgets.QVBoxLayout()
         section.setSpacing(4)
 
-        label = QtWidgets.QLabel("⚡ Create or Update Scripts with abovex initiative")
+        label = QtWidgets.QLabel("⚡ Create or Update Scripts")
         label.setStyleSheet("""
             font-size: 11px; 
             font-weight: bold; 
@@ -296,18 +304,17 @@ class DofusManager(QtWidgets.QMainWindow):
             f"• cycle_forward.sh: cycle through dofus windows with initiative defined.\n"
             f"• cycle_backward.sh: cycle backward through dofus windows with initiative defined.\n"
             f"• rename_windows.sh: rename opened windows with initiative defined.\n"
+            f"• reorganize_windows.sh: reorganize windows left to right by order.\n"
             f"• click_cycle_forward.sh: click and execute cycle_forward.sh\n"
-            f"• toggle_workspace.sh cycle through opened workspaces\n\n"
+            f"• toggle_workspace.sh: cycle through opened workspaces\n\n"
             "📋 Scripts locations:\n\n"
             f"• {SCRIPT_DIR}\n\n"
             "📋 Bind following scripts to your keyboard/mouse: \n\n"
             f"• {CYCLE_FORWARD}\n"
             f"• {CYCLE_BACKWARD}\n"
             f"• {CLICK_CYCLE_FORWARD}\n"
-            f"• {TOGGLE_WORKSPACE}\n\n"
-
-            "📋 This script doesn't need to be bind: \n\n"
-            f"• {RENAME_SCRIPT}\n"
+            f"• {TOGGLE_WORKSPACE}\n"
+            f"• {REORGANIZE_SCRIPT}\n"
         )
 
     # === SYSTEM TRAY ===
@@ -328,6 +335,9 @@ class DofusManager(QtWidgets.QMainWindow):
         
         rename_action = menu.addAction("🔄 Rename Windows")
         rename_action.triggered.connect(self._quick_rename)
+        
+        reorganize_action = menu.addAction("🔧 Order Windows")
+        reorganize_action.triggered.connect(self._quick_reorganize)
         
         cycle_action = menu.addAction("🔁 Generate Cycle Scripts")
         cycle_action.triggered.connect(self._generate_cycle_only)
@@ -366,7 +376,6 @@ class DofusManager(QtWidgets.QMainWindow):
             self.hide()
             self.tray.showMessage(APP_NAME, "Running in system tray", QtWidgets.QSystemTrayIcon.MessageIcon.Information, 2000)
             event.ignore()
-
 
     # === DATA MANAGEMENT ===
     def _refresh_all(self):
@@ -532,9 +541,20 @@ class DofusManager(QtWidgets.QMainWindow):
         generate_toggle_workspace()
         self._show_status("✅ Workspace script generated")
 
+    def _generate_rename_only(self):
+        """Generate rename script only"""
+        generate_rename_script(self.class_ini)
+        self._show_status("✅ Rename script generated")
+
+    def _generate_reorganize_only(self):
+        """Generate reorganize script only"""
+        generate_reorganize_script(self.class_ini)
+        self._show_status("✅ Reorganize script generated")
+
     def _generate_all_scripts(self):
         """Generate all scripts"""
         generate_rename_script(self.class_ini)
+        generate_reorganize_script(self.class_ini)
         generate_cycle_forward(self.class_ini)
         generate_cycle_backward(self.class_ini)
         generate_toggle_workspace()
@@ -549,12 +569,7 @@ class DofusManager(QtWidgets.QMainWindow):
         except Exception:
             self._show_status("❌ Cannot open folder")
 
-    def _generate_rename_only(self):
-        """Generate rename script only"""
-        generate_rename_script(self.class_ini)
-        self._show_status("✅ Rename script generated")
-
-    # === RENAME DIALOG ===
+    # === QUICK RENAME ===
     def _quick_rename(self):
         """Quick rename without dialog (all workspaces)"""
         generate_rename_script(self.class_ini, workspace=None)
@@ -582,6 +597,21 @@ class DofusManager(QtWidgets.QMainWindow):
                 3000
             )
 
+    # === QUICK REORGANIZE ===
+    def _quick_reorganize(self):
+        """Quick reorganize windows left to right"""
+        generate_reorganize_script(self.class_ini)
+        try:
+            result = run_cmd([str(REORGANIZE_SCRIPT)], timeout=10)
+            if result[2] == 0:
+                self._show_status("✅ Windows reorganized")
+            else:
+                error_msg = result[1] if result[1] else "Check window names"
+                self._show_status(f"⚠️ {error_msg}")
+        except Exception as e:
+            self._show_status(f"❌ Error: {str(e)}")
+
+    # === RENAME DIALOG ===
     def _show_rename_dialog(self):
         """Show workspace selection dialog for renaming"""
         dialog = QtWidgets.QDialog(self)

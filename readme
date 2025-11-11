@@ -90,6 +90,33 @@ Bind the generated scripts to your favorite hotkeys:
 
 ---
 
+### 5. Make app
+
+
+* pip install pyinstaller
+* pyinstaller --noconsole --onefile main.py
+
+Option 1 - Run the app directly:
+* ./dist/main
+
+
+Option 2 - Create App:
+*  nano ~/.local/share/applications/dofus_manager.desktop
+
+```
+[Desktop Entry]
+Name=Dofus Manager
+Exec=~/Documents/Jeux/Dofus/dofus_manager/dist/main
+Icon=/~/Documents/Jeux/Dofus/dofus_manager/assets/icon.png
+Type=Application
+Categories=Utility;
+Terminal=false
+```
+
+* chmod +x ~/.local/share/applications/dofus_manager.desktop
+
+
+---
 ## 📝 Notes
 
 * This tool is optimized for Linux (tested on Linux Mint Cinnamon 22).

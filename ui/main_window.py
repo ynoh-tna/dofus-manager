@@ -4,12 +4,13 @@ from PyQt6.QtCore import Qt
 from core.config import (
     APP_NAME, CONFIG_FILE, PROFILES_FILE, DEFAULT_CLASS_INI,
     RENAME_SCRIPT, REORGANIZE_SCRIPT, CLICK_CYCLE_FORWARD, CYCLE_FORWARD, CYCLE_BACKWARD, 
-    TOGGLE_WORKSPACE, SCRIPT_DIR
+    TOGGLE_WORKSPACE, SPACE_CYCLE_FORWARD, SCRIPT_DIR
 )
 from core.config import load_json, save_json
 from core.scripts import (
     generate_rename_script, generate_reorganize_script, generate_cycle_forward, 
-    generate_cycle_backward, generate_toggle_workspace, generate_click_cycle
+    generate_cycle_backward, generate_toggle_workspace, generate_space_cycle_forward,
+    generate_click_cycle
 )
 from core.workspace import get_workspaces
 from core.utils import make_executable, run_cmd
@@ -26,7 +27,7 @@ class DofusManager(QtWidgets.QMainWindow):
         self.setWindowTitle(self.i18n.get('title'))
         
         # Taille compacte 
-        self.setFixedSize(360, 800)
+        self.setFixedSize(360, 900)
         
         # Flags de fenêtre
         self.setWindowFlags(
@@ -79,9 +80,9 @@ class DofusManager(QtWidgets.QMainWindow):
         main_layout.addWidget(self.status_label)
 
     def _create_header(self):
-        """Créer l'en-tête compacte"""
+        """Créer l'en-tête compacte - layout amélioré"""
         header = QtWidgets.QHBoxLayout()
-        header.setSpacing(6)
+        header.setSpacing(4)
 
         title = QtWidgets.QLabel(self.i18n.get('app_name'))
         title.setStyleSheet("""
@@ -96,14 +97,14 @@ class DofusManager(QtWidgets.QMainWindow):
 
         btn_rename = QtWidgets.QPushButton(self.i18n.get('rename'))
         btn_rename.setStyleSheet(get_action_button_style("#0d7377"))
-        btn_rename.setFixedSize(100, 28)
+        btn_rename.setFixedSize(90, 28)
         btn_rename.setToolTip(self.i18n.get('rename_tooltip'))
         btn_rename.clicked.connect(self._show_rename_dialog)
         header.addWidget(btn_rename)
 
         btn_reorganize = QtWidgets.QPushButton(self.i18n.get('reorder'))
         btn_reorganize.setStyleSheet(get_action_button_style("#8b5cf6"))
-        btn_reorganize.setFixedSize(100, 28)
+        btn_reorganize.setFixedSize(90, 28)
         btn_reorganize.setToolTip(self.i18n.get('reorder_tooltip'))
         btn_reorganize.clicked.connect(self._quick_reorganize)
         header.addWidget(btn_reorganize)
@@ -232,13 +233,15 @@ class DofusManager(QtWidgets.QMainWindow):
 
         buttons = [
             (self.i18n.get('cycle_bidirectional'), self.i18n.get('cycle_tooltip'), "#14b8a6", 
-             self._generate_cycle_only, 0, 0),
+            self._generate_cycle_only, 0, 0),
             (self.i18n.get('rename_windows'), self.i18n.get('rename_tooltip_script'), "#8b5cf6", 
-             self._generate_rename_only, 0, 1),
+            self._generate_rename_only, 0, 1),
             (self.i18n.get('click_cycle'), self.i18n.get('click_cycle_tooltip'), "#84AB58", 
-             self._generate_click_cycle_only, 1, 0),
-            (self.i18n.get('workspaces'), self.i18n.get('workspaces_tooltip'), "#f59e0b", 
-             self._generate_workspace_only, 1, 1),
+            self._generate_click_cycle_only, 1, 0),
+            (self.i18n.get('workspaces'), self.i18n.get('workspaces_tooltip'), "#f59e0b",
+            self._generate_workspace_only, 1, 1), 
+            (self.i18n.get('space_cycle'), self.i18n.get('space_cycle_tooltip'), "#f97316", 
+            self._generate_space_cycle_only, 2, 0),
         ]
 
         for text, tooltip, color, callback, row, col in buttons:
@@ -434,6 +437,11 @@ class DofusManager(QtWidgets.QMainWindow):
         """Afficher un message de statut"""
         self.status_label.setText(message)
         QtCore.QTimer.singleShot(duration, lambda: self.status_label.setText(self.i18n.get('status_ready')))
+    
+    def _generate_space_cycle_only(self):
+        """Générer le script espace & cycle"""
+        generate_space_cycle_forward()
+        self._show_status(self.i18n.get('space_cycle_gen'))
 
     # === CLASS MANAGEMENT ===
     def _add_class(self):
@@ -583,6 +591,7 @@ class DofusManager(QtWidgets.QMainWindow):
         generate_cycle_forward(self.class_ini)
         generate_cycle_backward(self.class_ini)
         generate_toggle_workspace()
+        generate_space_cycle_forward()
         generate_click_cycle()
         self._show_status(self.i18n.get('all_gen'))
 

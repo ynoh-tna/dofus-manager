@@ -18,6 +18,7 @@ CLICK_CYCLE_FORWARD = SCRIPT_DIR / "click_cycle_forward.sh"
 CYCLE_FORWARD = SCRIPT_DIR / "cycle_forward.sh"
 CYCLE_BACKWARD = SCRIPT_DIR / "cycle_backward.sh"
 TOGGLE_WORKSPACE = SCRIPT_DIR / "toggle_workspace.sh"
+SPACE_CYCLE_FORWARD = SCRIPT_DIR / "space_cycle_forward.sh"
 
 DEFAULT_CLASS_INI = ['Feca', 'Cra', 'Enu', 'Panda', 'Sadi']
 

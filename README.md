@@ -4,7 +4,7 @@
 
 ### 🎮 Gestionnaire de Fenêtres Dofus sous Linux pour le multicompte
 
-* Ne modifie pas le client et n’automatise aucune action en jeu, ce qui reste conforme aux CGU.
+* Ne modifie pas le client et n'automatise aucune action en jeu, ce qui reste conforme aux CGU.
 
 #### 🖥️ Environnements testés
 
@@ -20,8 +20,9 @@
 * ⚡ **Renommage instantané des fenêtres**
 * 🔁 **Génération de scripts bash** pour le switch de fenêtres Dofus (avant/arrière)
 * 🖥️ **Switch entre les espaces de travail** avec une seule touche
-* 📁 **Gestion des profils d’initiatives** — sauvegarde et chargement de configurations
+* 📁 **Gestion des profils d'initiatives** — sauvegarde et chargement de configurations
 * 🧠 **Générateur de scripts automatique** — crée les scripts shell pour chaque action
+* ⌨️ **Scripts composés** — combinaisons touches + cycles (espace, clic, etc.)
 * 🪶 **Interface PyQt6 minimaliste et rapide**
 * 🌍 **Support multilingue** — français et anglais
 * 🎯 **Optimisé pour le multicompte** — raccourcis clavier complets
@@ -81,13 +82,14 @@ python3 main.py
 
 ##### 3. Générer les scripts
 
-Cliquez sur **"Générer Tous les Scripts"** pour créer :
+Cliquez sur les boutons correspondants ou **"Générer Tous les Scripts"** pour créer :
 
 * `cycle_forward.sh` — Cycle avant
 * `cycle_backward.sh` — Cycle arrière
 * `rename_windows.sh` — Renommer les fenêtres
 * `reorganize_windows.sh` — Réorganiser les fenêtres
-* `click_cycle_forward.sh` — Clic + cycle
+* `click_cycle_forward.sh` — Clic + cycle avant
+* `space_cycle_forward.sh` — Appui espace + cycle avant
 * `toggle_workspace.sh` — Bascule d'espace de travail
 
 ##### 4. Compiler l'application (optionnel)
@@ -120,5 +122,35 @@ chmod +x ~/.local/share/applications/dofus_manager.desktop
 #### 📝 Notes
 
 * L'interface sert principalement à la configuration des scripts
-* L’utilisation quotidienne repose sur les **raccourcis clavier** liés aux scripts générés
+* L'utilisation quotidienne repose sur les **raccourcis clavier** liés aux scripts générés
 * Les scripts sont indépendants et peuvent être exécutés directement
+* Les scripts combinés (clic, espace) sont utiles pour des actions complexes en jeu
+
+#### 🎮 Raccourcis suggérés
+
+Configurez dans vos paramètres clavier :
+
+```
+Super + Right          → cycle_forward.sh
+Super + Left           → cycle_backward.sh
+Super + Space          → space_cycle_forward.sh (espace + cycle avant)
+Super + Up             → rename_windows.sh (renommer fenêtres)
+Super + Down           → reorganize_windows.sh (réorganiser)
+Super + Shift + Space  → toggle_workspace.sh (changer espace travail)
+```
+
+#### 📦 Dossier des scripts
+
+Les scripts générés se trouvent dans :
+```
+~/.config/dofus_window_manager/scripts/
+```
+
+Tous les scripts sont exécutables directement :
+```bash
+~/.config/dofus_window_manager/scripts/cycle_forward.sh
+```
+
+---
+
+**© 2025 Dofus Manager** — Gestionnaire de fenêtres Linux conforme aux CGU Dofus

@@ -47,6 +47,8 @@ TRANSLATIONS = {
         'rename_tooltip_script': 'Rename windows script',
         'click_cycle_tooltip': 'Generate click & cycle script',
         'workspaces_tooltip': 'Generate workspace toggle script',
+        'space_cycle': '⌨️ Space & Cycle',
+        'space_cycle_tooltip': 'Generate space press & cycle script',
         
         # Menu contextuel
         'generate_all': '🔧 Generate All Scripts',
@@ -106,6 +108,7 @@ TRANSLATIONS = {
         'error': '❌ Error: {msg}',
         'windows_reorg': '✅ Windows reorganized',
         'check_names': '⚠️ Check window names',
+        'space_cycle_gen': '✅ Space & cycle generated',
         
         # About
         'about_title': 'About',
@@ -125,6 +128,7 @@ TRANSLATIONS = {
             '📁 Script location:\n{script_dir}\n\n'
             '🎮 Suggested key bindings:\n'
             '{cycle_forward}\n{cycle_backward}\n{click_cycle}\n{toggle_workspace}\n'
+            '• space_cycle_forward.sh — Press space + cycle forward.\n'
             '© 2025 Dofus Manager'
         ),
         'yes': 'Yes',
@@ -169,11 +173,13 @@ TRANSLATIONS = {
         'cycle_bidirectional': '🔄 Cycle',
         'rename_windows': '✏️ Renommer les fenêtres',
         'click_cycle': '🖱️ Clic et Cycle',
-        'workspaces': '🗃️ Espaces de Travail',
+        'workspaces': '🗃️ Switch workspaces',
         'cycle_tooltip': 'Générer les scripts de cycle avant/arrière',
         'rename_tooltip_script': 'Script de renommage des fenêtres',
         'click_cycle_tooltip': 'Générer le script clic & cycle',
         'workspaces_tooltip': 'Générer le script d\'alternance d\'espace de travail',
+        'space_cycle': '⌨️ Espace + Cycle',
+        'space_cycle_tooltip': 'Générer le script appui espace & cycle',
         
         # Menu contextuel
         'generate_all': '🔧 Générer Tous les Scripts',
@@ -201,6 +207,7 @@ TRANSLATIONS = {
         'delete_profile_msg': 'Supprimer le profil « {name} » ?',
         'save_profile_dialog': 'Enregistrer le Profil',
         'save_profile_prompt': 'Nom du profil :',
+        
         
         # Workspace
         'workspace_selection': 'Sélectionner un espace de travail (optionnel) :',
@@ -233,7 +240,8 @@ TRANSLATIONS = {
         'error': '❌ Erreur : {msg}',
         'windows_reorg': '✅ Fenêtres réorganisées',
         'check_names': '⚠️ Vérifiez les noms des fenêtres',
-        
+        'space_cycle_gen': '✅ Espace et cycle généré',
+
         # About
         'about_title': 'À Propos',
         'about_text': (
@@ -253,6 +261,7 @@ TRANSLATIONS = {
             '🎮 Raccourcis clavier suggérés :\n'
             '{cycle_forward}\n{cycle_backward}\n{click_cycle}\n{toggle_workspace}\n'
             '© 2025 Gestionnaire Dofus'
+            '• space_cycle_forward.sh — Appui espace + cycle avant.\n'
         ),
         'yes': 'Oui',
         'no': 'Non',

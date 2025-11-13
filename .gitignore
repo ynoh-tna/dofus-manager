@@ -35,3 +35,7 @@ scripts/*.sh
 .vscode/
 .idea/
 *.iml
+
+# Compiled executable
+dofus_manager
+dofus_manager.exe

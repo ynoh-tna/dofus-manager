@@ -92,32 +92,20 @@ Cliquez sur les boutons correspondants ou **"Générer Tous les Scripts"** pour 
 * `space_cycle_forward.sh` — Appui espace + cycle avant
 * `toggle_workspace.sh` — Bascule d'espace de travail
 
-##### 4. Compiler l'application (optionnel)
+#### 4. Compiler l'application
 
+Pour créer un exécutable standalone :
 ```bash
-pip install pyinstaller
-pyinstaller --noconsole --onefile main.py
+chmod +x build_app.sh
+./build_app.sh
 ```
 
-Ou créer un lanceur desktop :
-
+Cela va générer un fichier exécutable `dofus_manager` à la racine du projet. Vous pouvez ensuite le lancer directement :
 ```bash
-nano ~/.local/share/applications/dofus_manager.desktop
+./dofus_manager
 ```
 
-```ini
-[Desktop Entry]
-Name=Dofus Manager
-Exec=~/path/to/dist/main
-Icon=~/path/to/icon.png
-Type=Application
-Categories=Utility;
-Terminal=false
-```
-
-```bash
-chmod +x ~/.local/share/applications/dofus_manager.desktop
-```
+**Note** : La compilation nécessite PyInstaller. Le script l'installera automatiquement s'il n'est pas présent.
 
 #### 📝 Notes
 
